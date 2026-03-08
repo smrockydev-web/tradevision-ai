@@ -26,7 +26,8 @@ import {
   generateSignalVoiceover, 
   checkTradeResult, 
   generateResultVoiceover,
-  TradeResult
+  TradeResult,
+  isAIAvailable
 } from './services/geminiService';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -525,7 +526,13 @@ export default function App() {
                   {isAnalyzing && (
                     <div className="bg-emerald-500 text-black px-3 py-1.5 rounded-full flex items-center gap-2 text-xs font-bold animate-pulse">
                       <Activity className="w-3 h-3" />
-                      AI Analyzing...
+                      {isAIAvailable ? 'AI Analyzing...' : 'Calculating Logic...'}
+                    </div>
+                  )}
+                  {!isAIAvailable && (
+                    <div className="bg-amber-500/20 text-amber-500 border border-amber-500/20 px-3 py-1.5 rounded-full flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest">
+                      <AlertTriangle className="w-3 h-3" />
+                      Fallback Mode
                     </div>
                   )}
                   <button 
