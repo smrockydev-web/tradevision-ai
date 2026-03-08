@@ -17,7 +17,13 @@ import {
   Trophy,
   AlertTriangle,
   Calculator,
-  Target
+  Target,
+  Cpu,
+  Code,
+  Terminal,
+  Lock,
+  ChevronRight,
+  Globe
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -50,12 +56,16 @@ export default function App() {
   const [isHighPrecision, setIsHighPrecision] = useState(false);
   const [isHighPrecisionUnlocked, setIsHighPrecisionUnlocked] = useState(false);
   const [isLogicMode, setIsLogicMode] = useState(false);
+  const [isSuperComputing, setIsSuperComputing] = useState(false);
   const [showPrecisionNotice, setShowPrecisionNotice] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentStep, setPaymentStep] = useState<'pay' | 'code'>('pay');
   const [activationCode, setActivationCode] = useState('');
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [accessCode, setAccessCode] = useState('');
+  const [accessError, setAccessError] = useState(false);
   const [riskSettings, setRiskSettings] = useState({
     maxLoss: 100,
     tradeAmount: 10,
@@ -307,51 +317,81 @@ export default function App() {
     let score = 0;
     const breakdown: { label: string; value: number; type: 'UP' | 'DOWN' | 'NEUTRAL' }[] = [];
     
+    // Multiplier for Super Computing Mode
+    const multiplier = isSuperComputing ? 1.5 : 1;
+    
     // RSI Logic
     if (indicators.rsi.includes('Oversold')) {
-      score += 35;
-      breakdown.push({ label: 'RSI Oversold', value: 35, type: 'UP' });
+      const val = Math.round(35 * multiplier);
+      score += val;
+      breakdown.push({ label: 'RSI Oversold', value: val, type: 'UP' });
     } else if (indicators.rsi.includes('Overbought')) {
-      score -= 35;
-      breakdown.push({ label: 'RSI Overbought', value: 35, type: 'DOWN' });
+      const val = Math.round(35 * multiplier);
+      score -= val;
+      breakdown.push({ label: 'RSI Overbought', value: val, type: 'DOWN' });
     }
     
     // Trend Logic
     if (indicators.trend.includes('Strong Bullish')) {
-      score += 45;
-      breakdown.push({ label: 'Strong Bullish Trend', value: 45, type: 'UP' });
+      const val = Math.round(45 * multiplier);
+      score += val;
+      breakdown.push({ label: 'Strong Bullish Trend', value: val, type: 'UP' });
     } else if (indicators.trend.includes('Strong Bearish')) {
-      score -= 45;
-      breakdown.push({ label: 'Strong Bearish Trend', value: 45, type: 'DOWN' });
+      const val = Math.round(45 * multiplier);
+      score -= val;
+      breakdown.push({ label: 'Strong Bearish Trend', value: val, type: 'DOWN' });
     } else if (indicators.trend.includes('Weak Bullish')) {
-      score += 20;
-      breakdown.push({ label: 'Weak Bullish Trend', value: 20, type: 'UP' });
+      const val = Math.round(20 * multiplier);
+      score += val;
+      breakdown.push({ label: 'Weak Bullish Trend', value: val, type: 'UP' });
     } else if (indicators.trend.includes('Weak Bearish')) {
-      score -= 20;
-      breakdown.push({ label: 'Weak Bearish Trend', value: 20, type: 'DOWN' });
+      const val = Math.round(20 * multiplier);
+      score -= val;
+      breakdown.push({ label: 'Weak Bearish Trend', value: val, type: 'DOWN' });
     }
     
     // Support/Resistance Logic
     if (indicators.supportResistance.includes('Near Support')) {
-      score += 25;
-      breakdown.push({ label: 'Near Support Level', value: 25, type: 'UP' });
+      const val = Math.round(25 * multiplier);
+      score += val;
+      breakdown.push({ label: 'Near Support Level', value: val, type: 'UP' });
     } else if (indicators.supportResistance.includes('Near Resistance')) {
-      score -= 25;
-      breakdown.push({ label: 'Near Resistance Level', value: 25, type: 'DOWN' });
+      const val = Math.round(25 * multiplier);
+      score -= val;
+      breakdown.push({ label: 'Near Resistance Level', value: val, type: 'DOWN' });
     } else if (indicators.supportResistance.includes('Breakout')) {
+      const val = Math.round(30 * multiplier);
       if (score > 0) {
-        score += 30;
-        breakdown.push({ label: 'Bullish Breakout', value: 30, type: 'UP' });
+        score += val;
+        breakdown.push({ label: 'Bullish Breakout', value: val, type: 'UP' });
       } else {
-        score -= 30;
-        breakdown.push({ label: 'Bearish Breakout', value: 30, type: 'DOWN' });
+        score -= val;
+        breakdown.push({ label: 'Bearish Breakout', value: val, type: 'DOWN' });
       }
+    }
+
+    // Super Computing Extra Weights
+    if (isSuperComputing) {
+      if (indicators.patterns && indicators.patterns !== 'Not Visible') {
+        score += score > 0 ? 15 : -15;
+        breakdown.push({ label: 'Super Pattern Analysis', value: 15, type: score > 0 ? 'UP' : 'DOWN' });
+      }
+      // Volatility Check (Simulated)
+      score += score > 0 ? 10 : -10;
+      breakdown.push({ label: 'Volatility Confirmation', value: 10, type: score > 0 ? 'UP' : 'DOWN' });
     }
     
     const direction = score > 15 ? 'UP' : score < -15 ? 'DOWN' : 'NEUTRAL';
-    const accuracy = Math.min(99, Math.abs(score));
+    const accuracy = Math.min(99.9, Math.abs(score));
     
-    return { direction, accuracy, breakdown };
+    // Multi-timeframe simulation for Logic Mode
+    const predictions = {
+      shortTerm: score > 25 ? 'UP' : score < -25 ? 'DOWN' : 'NEUTRAL',
+      mediumTerm: score > 15 ? 'UP' : score < -15 ? 'DOWN' : 'NEUTRAL',
+      longTerm: score > 10 ? 'UP' : score < -10 ? 'DOWN' : 'NEUTRAL'
+    };
+    
+    return { direction, accuracy, breakdown, predictions };
   };
 
   const handleHighPrecisionToggle = () => {
@@ -385,6 +425,186 @@ export default function App() {
     }
   };
 
+  const handleAccessSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (accessCode === '007') {
+      setIsAuthenticated(true);
+      setAccessError(false);
+    } else {
+      setAccessError(true);
+      setTimeout(() => setAccessError(false), 2000);
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white font-sans overflow-hidden relative">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[120px] rounded-full animate-pulse" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-500/10 blur-[120px] rounded-full animate-pulse delay-700" />
+          
+          {/* Grid Pattern */}
+          <div className="absolute inset-0 opacity-[0.03]" 
+               style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-6 min-h-screen flex flex-col">
+          {/* Nav */}
+          <nav className="h-24 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.3)] border border-white/20">
+                <Code className="text-black w-7 h-7" strokeWidth={2.5} />
+              </div>
+              <div>
+                <span className="text-xl font-black tracking-tighter uppercase italic">TradeVision <span className="text-emerald-500">AI</span></span>
+                <div className="text-[8px] uppercase tracking-[0.3em] text-slate-500 font-bold">Quantum Logic Engine</div>
+              </div>
+            </div>
+            <div className="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-widest text-slate-400">
+              <a href="#" className="hover:text-emerald-500 transition-colors">Technology</a>
+              <a href="#" className="hover:text-emerald-500 transition-colors">Precision</a>
+              <a href="#" className="hover:text-emerald-500 transition-colors">Security</a>
+            </div>
+          </nav>
+
+          {/* Hero Section */}
+          <div className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-16 py-12">
+            <div className="flex-1 text-center lg:text-left space-y-8">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em]"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                v4.0 Quantum Release
+              </motion.div>
+              
+              <motion.h1 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] italic"
+              >
+                FUTURE OF <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">TRADING</span>
+              </motion.h1>
+              
+              <motion.p 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="text-slate-400 text-lg max-w-xl mx-auto lg:mx-0 leading-relaxed"
+              >
+                Experience the world's most advanced AI-driven binary options analysis engine. 
+                Real-time vision processing, logical supercomputing, and quantum accuracy.
+              </motion.p>
+
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.6 }}
+                className="flex flex-wrap items-center justify-center lg:justify-start gap-6 pt-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                    <Target className="w-5 h-5 text-emerald-500" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-white font-bold text-sm">99.9%</div>
+                    <div className="text-slate-500 text-[10px] uppercase font-bold">Accuracy</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                    <Zap className="w-5 h-5 text-cyan-500" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-white font-bold text-sm">Instant</div>
+                    <div className="text-slate-500 text-[10px] uppercase font-bold">Execution</div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Access Card */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="w-full max-w-md"
+            >
+              <div className="bg-[#0D0D0F] border border-white/10 rounded-[32px] p-8 shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full" />
+                
+                <div className="relative z-10 space-y-8">
+                  <div className="flex items-center justify-between">
+                    <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10">
+                      <Lock className="w-6 h-6 text-emerald-500" />
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Security Protocol</div>
+                      <div className="text-emerald-500 font-mono text-xs">ENCRYPTED_SESSION</div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-bold text-white">Enter Portal</h3>
+                    <p className="text-slate-500 text-sm">Please provide your unique access code to initialize the AI engine.</p>
+                  </div>
+
+                  <form onSubmit={handleAccessSubmit} className="space-y-4">
+                    <div className="relative">
+                      <input 
+                        type="password" 
+                        placeholder="ACCESS CODE" 
+                        value={accessCode}
+                        onChange={(e) => setAccessCode(e.target.value)}
+                        className={cn(
+                          "w-full bg-black border border-white/10 rounded-2xl px-6 py-4 text-white font-mono tracking-[1em] text-center focus:outline-none focus:border-emerald-500/50 transition-all",
+                          accessError && "border-rose-500/50 animate-shake"
+                        )}
+                      />
+                      {accessError && (
+                        <div className="absolute -bottom-6 left-0 right-0 text-center text-[10px] text-rose-500 font-bold uppercase tracking-widest">
+                          Invalid Access Protocol
+                        </div>
+                      )}
+                    </div>
+                    <button 
+                      type="submit"
+                      className="w-full bg-emerald-500 hover:bg-emerald-400 text-black py-4 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+                    >
+                      Initialize TradeVision
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </form>
+
+                  <div className="pt-4 flex items-center justify-center gap-4 text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                    <div className="flex items-center gap-1"><Globe className="w-3 h-3" /> Global Node</div>
+                    <div className="w-1 h-1 rounded-full bg-slate-800" />
+                    <div className="flex items-center gap-1"><Terminal className="w-3 h-3" /> Secure Shell</div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Footer */}
+          <footer className="h-24 flex items-center justify-between border-t border-white/5 text-[10px] font-bold uppercase tracking-widest text-slate-600">
+            <div>© 2026 TradeVision AI Systems</div>
+            <div className="flex gap-8">
+              <span className="hover:text-slate-400 cursor-pointer transition-colors">Privacy</span>
+              <span className="hover:text-slate-400 cursor-pointer transition-colors">Terms</span>
+              <span className="hover:text-slate-400 cursor-pointer transition-colors">API Docs</span>
+            </div>
+          </footer>
+        </div>
+      </div>
+    );
+  }
+
   if (!isLoaded) {
     return <div className="min-h-screen bg-black flex items-center justify-center text-white">Loading TradeVision AI...</div>;
   }
@@ -395,11 +615,11 @@ export default function App() {
       <header className="border-b border-white/5 bg-[#0D0D0F]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <Zap className="text-black w-6 h-6 fill-current" />
+            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 border border-white/20">
+              <Code className="text-black w-6 h-6 fill-none" strokeWidth={2.5} />
             </div>
             <div>
-              <h1 className="font-bold text-lg tracking-tight text-white">TradeVision AI</h1>
+              <h1 className="font-bold text-lg tracking-tight text-white uppercase italic">TradeVision <span className="text-emerald-500">AI</span></h1>
               <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-slate-500 font-semibold">
                 <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Live Analysis Active
@@ -409,6 +629,23 @@ export default function App() {
 
           <div className="flex items-center gap-4">
             <div className="hidden md:flex items-center gap-6 mr-4 text-sm font-medium text-slate-400">
+              <button 
+                onClick={() => {
+                  setIsSuperComputing(!isSuperComputing);
+                  if (!isLogicMode) setIsLogicMode(true);
+                }}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1 rounded-full border transition-all active:scale-95",
+                  isSuperComputing 
+                    ? "text-fuchsia-500 bg-fuchsia-500/10 border-fuchsia-500/20 shadow-[0_0_15px_rgba(217,70,239,0.1)]" 
+                    : "text-slate-500 bg-white/5 border-white/10 opacity-70"
+                )}
+              >
+                <Cpu className={cn("w-3 h-3", isSuperComputing ? "animate-spin" : "")} />
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  {isSuperComputing ? 'Super Computing Active' : 'Standard Logic'}
+                </span>
+              </button>
               <button 
                 onClick={() => setIsLogicMode(!isLogicMode)}
                 className={cn(
@@ -655,7 +892,12 @@ export default function App() {
                         <div className="w-full space-y-3 mb-6">
                           <div className="bg-cyan-500/5 border border-cyan-500/10 rounded-xl p-4">
                             <div className="text-[10px] font-bold text-cyan-500 uppercase tracking-widest mb-3 flex items-center justify-between">
-                              <span>Calculation Breakdown</span>
+                              <div className="flex items-center gap-2">
+                                <span>Calculation Breakdown</span>
+                                {isSuperComputing && (
+                                  <span className="bg-fuchsia-500 text-black px-1.5 py-0.5 rounded text-[8px] animate-pulse">SUPER COMPUTING</span>
+                                )}
+                              </div>
                               <span>Accuracy: {calculateLogicalDecision(signal.indicators).accuracy}%</span>
                             </div>
                             <div className="space-y-2">
@@ -796,30 +1038,30 @@ export default function App() {
                           <span className="text-[9px] text-slate-500 uppercase mb-1">5-30 Sec</span>
                           <div className={cn(
                             "text-xs font-bold",
-                            signal.predictions?.shortTerm === 'UP' ? "text-emerald-500" : 
-                            signal.predictions?.shortTerm === 'DOWN' ? "text-rose-500" : "text-slate-400"
+                            (isLogicMode ? calculateLogicalDecision(signal.indicators).predictions.shortTerm : signal.predictions?.shortTerm) === 'UP' ? "text-emerald-500" : 
+                            (isLogicMode ? calculateLogicalDecision(signal.indicators).predictions.shortTerm : signal.predictions?.shortTerm) === 'DOWN' ? "text-rose-500" : "text-slate-400"
                           )}>
-                            {signal.predictions?.shortTerm || '---'}
+                            {isLogicMode ? calculateLogicalDecision(signal.indicators).predictions.shortTerm : (signal.predictions?.shortTerm || '---')}
                           </div>
                         </div>
                         <div className="flex flex-col items-center p-2 bg-black/20 rounded-lg border border-white/5">
                           <span className="text-[9px] text-slate-500 uppercase mb-1">1 Min</span>
                           <div className={cn(
                             "text-xs font-bold",
-                            signal.predictions?.mediumTerm === 'UP' ? "text-emerald-500" : 
-                            signal.predictions?.mediumTerm === 'DOWN' ? "text-rose-500" : "text-slate-400"
+                            (isLogicMode ? calculateLogicalDecision(signal.indicators).predictions.mediumTerm : signal.predictions?.mediumTerm) === 'UP' ? "text-emerald-500" : 
+                            (isLogicMode ? calculateLogicalDecision(signal.indicators).predictions.mediumTerm : signal.predictions?.mediumTerm) === 'DOWN' ? "text-rose-500" : "text-slate-400"
                           )}>
-                            {signal.predictions?.mediumTerm || '---'}
+                            {isLogicMode ? calculateLogicalDecision(signal.indicators).predictions.mediumTerm : (signal.predictions?.mediumTerm || '---')}
                           </div>
                         </div>
                         <div className="flex flex-col items-center p-2 bg-black/20 rounded-lg border border-white/5">
                           <span className="text-[9px] text-slate-500 uppercase mb-1">10 Min</span>
                           <div className={cn(
                             "text-xs font-bold",
-                            signal.predictions?.longTerm === 'UP' ? "text-emerald-500" : 
-                            signal.predictions?.longTerm === 'DOWN' ? "text-rose-500" : "text-slate-400"
+                            (isLogicMode ? calculateLogicalDecision(signal.indicators).predictions.longTerm : signal.predictions?.longTerm) === 'UP' ? "text-emerald-500" : 
+                            (isLogicMode ? calculateLogicalDecision(signal.indicators).predictions.longTerm : signal.predictions?.longTerm) === 'DOWN' ? "text-rose-500" : "text-slate-400"
                           )}>
-                            {signal.predictions?.longTerm || '---'}
+                            {isLogicMode ? calculateLogicalDecision(signal.indicators).predictions.longTerm : (signal.predictions?.longTerm || '---')}
                           </div>
                         </div>
                       </div>
