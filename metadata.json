@@ -1,0 +1,5 @@
+{
+  "name": "TradeVision AI",
+  "description": "Real-time AI trading assistant that analyzes your screen to provide high-probability binary options signals.",
+  "requestFramePermissions": ["display-capture"]
+}
